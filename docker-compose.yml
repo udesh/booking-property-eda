@@ -1,0 +1,106 @@
+version: "3.4"
+
+services:
+
+  # Database
+  booking-mysql-db:
+    image: mysql:5.7
+    container_name: booking-mysql-db
+    hostname: booking-mysql-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'booking_db'
+      MYSQL_USER: 'booking_dba'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'root'
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    volumes:
+      - booking-db-volume:/var/lib/mysql
+    networks:
+      - booking-app-network
+
+  # Apache Kafka
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: booking-zooleeper
+    ports:
+    - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: booking-kafka
+    ports:
+    - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+  
+  kafka-manager:
+    image: trivadis/kafka-manager
+    container_name: kafka-manager
+    hostname: kafka-manager
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "28044:9000"
+    environment:
+      ZK_HOSTS: 'zookeeper:2181'
+      APPLICATION_SECRET: 'abc123!'
+    restart: always
+
+  # Core services
+  booking-service-discovery:
+    hostname: booking-service-discovery
+    image: consul
+    container_name: booking-service-discovery
+    restart: always
+    ports:
+      - "8500:8500"
+    networks:
+      - booking-app-network
+
+  booking-api-gateway-server:
+    build:
+      context: ./booking-api-gateway-service
+      args:
+        JAR_FILE: booking-api-gateway-service-0.0.1-SNAPSHOT.jar
+      dockerfile: Dockerfile
+    image: booking-api-gateway-server
+    container_name: booking-api-gateway-server
+    hostname: booking-api-gateway-server
+    ports:
+      - "8765:8765"
+    networks:
+      - booking-app-network
+    environment:
+      - SERVER_PORT=8765
+      - SPRING_PROFILES_ACTIVE=docker
+
+  booking-catalog-service:
+    build:
+      context: ./booking-catalog-service
+      args:
+        JAR_FILE: booking-catalog-service-0.0.1-SNAPSHOT.jar
+      dockerfile: Dockerfile
+    image: booking-catalog-service
+    container_name: booking-catalog-service
+    hostname: booking-catalog-service
+    ports:
+      - "6001:6001"
+    networks:
+      - booking-app-network
+    environment:
+      - SERVER_PORT=6001
+      - SPRING_PROFILES_ACTIVE=docker    
+
+volumes:
+  booking-db-volume:
+
+networks:
+  booking-app-network:
+    driver: bridge

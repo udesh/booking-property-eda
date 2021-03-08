@@ -1,0 +1,40 @@
+server:
+  port: ${SERVER_PORT:8765}
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  sleuth:
+    sampler:
+      probability: 1.0
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+zuul:
+  sensitiveHeaders:
+  host:
+    socket-timeout-millis: 30000
+    connect-timeout-millis: 30000
+  prefix: /api
+  routes:
+    catalog:
+      path: /catalog/**
+      serviceId: booking-catalog-service
+  ribbon:
+    eager-load:
+      enabled: true
+  ribbon-isolation-strategy: THREAD
+
+ribbon:
+  ConnectTimeout: 10000
+  ReadTimeout: 60000
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 40000
