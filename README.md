@@ -52,3 +52,14 @@ This project uses Consul as Discovery service.
 
 Since docker-compose manages all consul stuff hence using Consul while running services in docker.
 
+<hr>
+
+### Security
+
+OAuth API sercurity -
+Auth server and resourse server. 
+Issue access token and use JWT token when communicatiing between front end app and micro services gateway.
+Transport layer security (TLS) and/or a secure sockets layer (SSL) encrypts data between clients and/or brokers, from clients → brokers, and tools → brokers.
+Isolation of zookeeper.
+Regular monitoring of kafka messaging and establish alerting.
+
